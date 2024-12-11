@@ -109,8 +109,18 @@ tasks.named("assemble").configure {
     dependsOn("shadowJar")
 }
 
-configure<PublishingExtension> {
-    publications.named<MavenPublication>("maven") {
-        from(components["java"])
-    }
+tasks.named("build").configure {
+    dependsOn("shadowJar")
 }
+
+tasks.register("runCopyJarScript", Exec::class) {
+    group = "build"
+    description = "Runs the copyjar.sh script after build completion."
+    workingDir(rootDir)
+    commandLine("sh", "copyjar.sh", project.version.toString())
+}
+
+tasks.named("build") {
+    finalizedBy("runCopyJarScript")
+}
+
