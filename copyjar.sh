@@ -6,4 +6,4 @@ VERSION="$1"
 mkdir -p build/libs
 
 # Copy and rename the jar, using $VERSION in the final filename
-cp worldedit-bukkit/build/libs/worldedit-bukkit-${VERSION}.jar "build/libs/WorldEdit-${VERSION}.jar"
+cp worldedit-bukkit/build/libs/worldedit-bukkit-${VERSION}.jar "build/libs/WorldEdit.jar"
