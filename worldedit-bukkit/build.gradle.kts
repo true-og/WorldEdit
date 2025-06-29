@@ -3,12 +3,14 @@ import io.papermc.paperweight.userdev.attribute.Obfuscation
 
 plugins {
     `java-library`
+	 id("io.papermc.paperweight.userdev") version "2.0.0-beta.17"
 }
 
 applyPlatformAndCoreConfiguration()
 applyShadowConfiguration()
 
 repositories {
+    mavenCentral()
     maven { url = uri("https://hub.spigotmc.org/nexus/content/groups/public") }
     maven { url = uri("https://repo.papermc.io/repository/maven-public/") }
 }
@@ -19,7 +21,6 @@ val localImplementation = configurations.create("localImplementation") {
     isCanBeResolved = false
 }
 configurations["compileOnly"].extendsFrom(localImplementation)
-configurations["testImplementation"].extendsFrom(localImplementation)
 
 val adapters = configurations.create("adapters") {
     description = "Adapters to include in the JAR"
@@ -27,42 +28,24 @@ val adapters = configurations.create("adapters") {
     isCanBeResolved = true
     shouldResolveConsistentlyWith(configurations["runtimeClasspath"])
     attributes {
-        attribute(Obfuscation.OBFUSCATION_ATTRIBUTE,
-            if ((project.findProperty("enginehub.obf.none") as String?).toBoolean()) {
-                objects.named(Obfuscation.NONE)
-            } else {
-                objects.named(Obfuscation.OBFUSCATED)
-            }
-        )
+        attribute(Obfuscation.OBFUSCATION_ATTRIBUTE, objects.named(Obfuscation.OBFUSCATED))
     }
 }
 
 dependencies {
     "api"(project(":worldedit-core"))
     "api"(project(":worldedit-libs:bukkit"))
-    // Technically this is api, but everyone should already have some form of the bukkit API
-    // Avoid pulling in another one, especially one so outdated.
-    "localImplementation"("org.spigotmc:spigot-api:1.17-R0.1-SNAPSHOT") {
-        exclude("junit", "junit")
-    }
-
+    paperweight.paperDevBundle("1.19.4-R0.1-SNAPSHOT")
     "localImplementation"(platform("org.apache.logging.log4j:log4j-bom:${Versions.LOG4J}") {
         because("Spigot provides Log4J (sort of, not in API, implicitly part of server)")
     })
     "localImplementation"("org.apache.logging.log4j:log4j-api")
-
     "compileOnly"("org.jetbrains:annotations:20.1.0")
-    "compileOnly"("io.papermc.paper:paper-api:1.17-R0.1-SNAPSHOT") {
-        exclude("org.slf4j", "slf4j-api")
-        exclude("junit", "junit")
-    }
     "implementation"("io.papermc:paperlib:1.0.7")
     "compileOnly"("com.sk89q:dummypermscompat:1.10")
     "implementation"("org.bstats:bstats-bukkit:2.2.1")
     "implementation"("it.unimi.dsi:fastutil")
-    "testImplementation"("org.mockito:mockito-core:1.9.0-rc1")
-
-    project.project(":worldedit-bukkit:adapters").subprojects.forEach {
+	project.project(":worldedit-bukkit:adapters").subprojects.forEach {
         "adapters"(project(it.path))
     }
 }
@@ -98,7 +81,6 @@ tasks.named<ShadowJar>("shadowJar") {
         include(dependency("org.bstats:"))
         include(dependency("io.papermc:paperlib"))
         include(dependency("it.unimi.dsi:fastutil"))
-
         relocate("org.bstats", "com.sk89q.worldedit.bstats")
         relocate("io.papermc.lib", "com.sk89q.worldedit.bukkit.paperlib")
         relocate("it.unimi.dsi.fastutil", "com.sk89q.worldedit.bukkit.fastutil")
@@ -109,8 +91,14 @@ tasks.named("assemble").configure {
     dependsOn("shadowJar")
 }
 
-configure<PublishingExtension> {
-    publications.named<MavenPublication>("maven") {
-        from(components["java"])
-    }
+tasks.register("runCopyJarScript", Exec::class) {
+    group = "build"
+    description = "Runs the copyjar.sh script after build completion."
+    workingDir(rootDir)
+    commandLine("sh", "copyjar.sh", project.version.toString())
 }
+
+tasks.named("build") {
+    finalizedBy("runCopyJarScript")
+}
+
