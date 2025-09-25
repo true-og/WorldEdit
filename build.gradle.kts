@@ -11,6 +11,9 @@ buildscript {
             name = "Fabric"
             url = uri("https://maven.fabricmc.net/")
         }
+    plugins {
+        id("io.papermc.paperweight.userdev") apply false
+    }
     }
     dependencies {
         classpath("net.fabricmc:fabric-loom:${versions.loom}")
@@ -19,6 +22,7 @@ buildscript {
 plugins {
     id("org.enginehub.codecov")
     jacoco
+    eclipse
 }
 
 // Work around https://github.com/gradle/gradle/issues/4823

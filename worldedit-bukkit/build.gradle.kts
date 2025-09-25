@@ -3,7 +3,7 @@ import io.papermc.paperweight.userdev.attribute.Obfuscation
 
 plugins {
     `java-library`
-	 id("io.papermc.paperweight.userdev") version "2.0.0-beta.17"
+    id("io.papermc.paperweight.userdev")
 }
 
 applyPlatformAndCoreConfiguration()
