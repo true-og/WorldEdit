@@ -1,3 +1,4 @@
+buildSrc/.kotlin/
 .classpath
 .project
 .settings

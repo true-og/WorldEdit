@@ -86,10 +86,13 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.logging.Level;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -137,6 +140,7 @@ public class WorldEditPlugin extends JavaPlugin implements TabCompleter {
         worldEdit.getPlatformManager().register(platform);
 
         createDefaultConfiguration("config.yml"); // Create the default configuration file
+        createDefaultDirectory("schematics");
 
         config = new BukkitConfiguration(new YAMLProcessor(new File(getDataFolder(), "config.yml"), true), this);
 
@@ -353,6 +357,44 @@ public class WorldEditPlugin extends JavaPlugin implements TabCompleter {
             } catch (IOException e) {
                 getLogger().severe("Unable to read default configuration: " + name);
             }
+        }
+    }
+
+    protected void createDefaultDirectory(String name) {
+        Path actual = getDataFolder().toPath().resolve(name);
+        if (Files.exists(actual)) {
+            return;
+        }
+
+        try {
+            Files.createDirectories(actual);
+        } catch (IOException e) {
+            getLogger().log(Level.WARNING, "Failed to create default directory: " + name, e);
+            return;
+        }
+
+        String resourcePrefix = "defaults/" + name + "/";
+        try (JarFile jarFile = new JarFile(getFile())) {
+            Enumeration<JarEntry> entries = jarFile.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                if (entry.isDirectory() || !entry.getName().startsWith(resourcePrefix)) {
+                    continue;
+                }
+
+                Path output = actual.resolve(entry.getName().substring(resourcePrefix.length()));
+                Path parent = output.getParent();
+                if (parent != null) {
+                    Files.createDirectories(parent);
+                }
+                try (InputStream input = jarFile.getInputStream(entry)) {
+                    Files.copy(input, output);
+                }
+            }
+
+            getLogger().info("Default directory written: " + name);
+        } catch (IOException e) {
+            getLogger().log(Level.WARNING, "Failed to write default directory", e);
         }
     }
 

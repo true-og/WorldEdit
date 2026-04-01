@@ -1,5 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import io.papermc.paperweight.userdev.attribute.Obfuscation
+import org.gradle.api.tasks.Copy
 
 plugins {
     `java-library`
@@ -91,14 +92,15 @@ tasks.named("assemble").configure {
     dependsOn("shadowJar")
 }
 
-tasks.register("runCopyJarScript", Exec::class) {
+tasks.register<Copy>("copyPluginJar") {
     group = "build"
-    description = "Runs the copyjar.sh script after build completion."
-    workingDir(rootDir)
-    commandLine("sh", "copyjar.sh", project.version.toString())
+    description = "Copies the shaded Bukkit plugin jar into the root build/libs directory."
+    dependsOn("shadowJar")
+    from(tasks.named<ShadowJar>("shadowJar").flatMap { it.archiveFile })
+    into(rootProject.layout.buildDirectory.dir("libs"))
+    rename { "WorldEdit-${project.version}.jar" }
 }
 
 tasks.named("build") {
-    finalizedBy("runCopyJarScript")
+    dependsOn("copyPluginJar")
 }
-
