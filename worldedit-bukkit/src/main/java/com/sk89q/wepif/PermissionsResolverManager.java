@@ -91,7 +91,7 @@ public class PermissionsResolverManager implements PermissionsResolver {
         bPermissionsResolver.class,
         GroupManagerResolver.class,
         NijiPermissionsResolver.class,
-        VaultResolver.class,
+        LuckPermsResolver.class,
         DinnerPermsResolver.class,
         FlatFilePermissionsResolver.class
     };
@@ -220,6 +220,10 @@ public class PermissionsResolverManager implements PermissionsResolver {
         } else {
             List<String> disabledResolvers = config.getStringList("resolvers.disabled", new ArrayList<>());
             List<String> stagedEnabled = config.getStringList("resolvers.enabled", null);
+            if (migrateVaultToLuckPerms(stagedEnabled) | migrateVaultToLuckPerms(disabledResolvers)) {
+                LOGGER.info("WEPIF: Migrated VaultResolver entry to LuckPermsResolver in wepif.yml");
+                isUpdated = true;
+            }
             for (Iterator<String> i = stagedEnabled.iterator(); i.hasNext();) {
                 String nextName = i.next();
                 Class<?> next = null;
@@ -270,6 +274,24 @@ public class PermissionsResolverManager implements PermissionsResolver {
         return isUpdated;
     }
 
+    private static boolean migrateVaultToLuckPerms(List<String> entries) {
+        if (entries == null) {
+            return false;
+        }
+        boolean changed = false;
+        for (int i = 0; i < entries.size(); i++) {
+            if ("VaultResolver".equals(entries.get(i))) {
+                if (entries.contains("LuckPermsResolver")) {
+                    entries.remove(i--);
+                } else {
+                    entries.set(i, "LuckPermsResolver");
+                }
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
     public static class MissingPluginException extends Exception {
     }
 
@@ -282,7 +304,7 @@ public class PermissionsResolverManager implements PermissionsResolver {
                 setPluginPermissionsResolver(plugin);
             } else if ("permissions".equalsIgnoreCase(name) || "permissionsex".equalsIgnoreCase(name)
                     || "bpermissions".equalsIgnoreCase(name) || "groupmanager".equalsIgnoreCase(name)
-                    || "vault".equalsIgnoreCase(name)) {
+                    || "luckperms".equalsIgnoreCase(name)) {
                 load();
             }
         }
@@ -294,7 +316,7 @@ public class PermissionsResolverManager implements PermissionsResolver {
             if (event.getPlugin() instanceof PermissionsProvider
                     || "permissions".equalsIgnoreCase(name) || "permissionsex".equalsIgnoreCase(name)
                     || "bpermissions".equalsIgnoreCase(name) || "groupmanager".equalsIgnoreCase(name)
-                    || "vault".equalsIgnoreCase(name)) {
+                    || "luckperms".equalsIgnoreCase(name)) {
                 load();
             }
         }

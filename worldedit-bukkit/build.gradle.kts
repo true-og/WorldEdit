@@ -44,6 +44,7 @@ dependencies {
     "compileOnly"("org.jetbrains:annotations:20.1.0")
     "implementation"("io.papermc:paperlib:1.0.7")
     "compileOnly"("com.sk89q:dummypermscompat:1.10")
+    "compileOnly"("net.luckperms:api:5.5")
     "implementation"("org.bstats:bstats-bukkit:2.2.1")
     "implementation"("it.unimi.dsi:fastutil")
 	project.project(":worldedit-bukkit:adapters").subprojects.forEach {
