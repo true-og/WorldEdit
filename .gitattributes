@@ -32,3 +32,4 @@
 *.so            binary
 *.war           binary
 *.jks           binary
+.gitea/CODEOWNERS linguist-detectable=false
